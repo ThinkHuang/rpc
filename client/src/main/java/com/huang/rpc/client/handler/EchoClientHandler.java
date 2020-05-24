@@ -12,7 +12,6 @@ public class EchoClientHandler extends SimpleChannelInboundHandler<Object> {
     
     private Object response;
     
-    
     public Object getResponse() {
         return response;
     }

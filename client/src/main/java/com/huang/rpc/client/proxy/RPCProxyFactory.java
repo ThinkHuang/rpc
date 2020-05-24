@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 import com.huang.rpc.api.request.RequestBody;
+import com.huang.rpc.client.config.GlobalConfig;
 import com.huang.rpc.client.handler.EchoClientHandler;
 
 import io.netty.bootstrap.Bootstrap;
@@ -20,10 +21,10 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 
-public class RPCProxy {
+public class RPCProxyFactory implements ProxyFactory {
     
     @SuppressWarnings("unchecked")
-    public static <T> T createProxy(final Class<?> target) {
+    public <T> T createProxy(final Class<?> target) {
         return (T)Proxy.newProxyInstance(target.getClassLoader(), 
                                         new Class[]{target}, 
                                         new InvocationHandler() {
@@ -59,10 +60,9 @@ public class RPCProxy {
                                 pipeline.addLast(new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)));
                                 pipeline.addLast(clientHandler);
                             }
-                        
                         });
                     
-                    ChannelFuture future = boot.connect("localhost", 8088).sync();
+                    ChannelFuture future = boot.connect(GlobalConfig.REMOTE_SERVER_HOST, GlobalConfig.REMOTE_SERVER_PORT).sync();
                     future.channel().writeAndFlush(body);
                     future.channel().closeFuture().sync();
                 } finally {
