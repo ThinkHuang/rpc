@@ -58,7 +58,6 @@ public class MultipleServerBootstrap extends AbstractBootstrap
         finally
         {
             group.shutdownGracefully().sync();
-            
         }
     }
 }

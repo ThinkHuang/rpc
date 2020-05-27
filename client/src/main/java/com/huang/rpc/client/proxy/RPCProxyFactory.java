@@ -33,7 +33,7 @@ public class RPCProxyFactory implements ProxyFactory {
                 RequestBody body = new RequestBody();
                 body.setClassName(target.getName());
                 // 如果是Object的方法，那么直接返回
-                if (method.getClass().isAssignableFrom(Object.class)) {
+                if (method.getDeclaringClass() == Object.class) {
                     return method.invoke(this, args);
                 }
                 body.setMethodName(method.getName());
