@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.huang.rpc.api.request.RequestBody;
 import com.huang.rpc.server.handler.Invocation;
@@ -18,28 +20,27 @@ import com.huang.rpc.server.handler.RpcInvocation;
  * @author Administrator
  *
  */
-public class ServiceRegistry implements Registry
-{
+public class ServiceRegistry implements Registry {
     
     // service全限定名称缓存
     public static final List<String> serviceCache = new ArrayList<>();
+    
+    // 接口名和服务名的映射关系缓存
+    public static final Map<String, String> serviceNameCache = new ConcurrentHashMap<>();
+    
     // 服务名称和实例映射关系缓存
     private static final Map<String, Object> serviceMapper = new HashMap<>();
     
     @Override
-    public void publish(String basePackage)
-    {
-        // basePackage = "com.huang.rpc.server.service"
+    public void publish(String basePackage) {
         // 获取服务列表
         findServices(basePackage);
         // 服务注册
         // register();
     }
     
-    private void findServices(String basePackage)
-    {
-        if (null == basePackage || "".equals(basePackage))
-        {
+    private void findServices(String basePackage) {
+        if (null == basePackage || "".equals(basePackage)) {
             return;
         }
         // 将com.huang.rpc.server.service变为com/huang/rpc/server/service
@@ -47,19 +48,14 @@ public class ServiceRegistry implements Registry
         // 获取资源路径
         URL url = this.getClass().getClassLoader().getResource(path);
         File directory = new File(url.getFile());
-        for (File file : directory.listFiles())
-        {
+        for (File file : directory.listFiles()) {
             // 判断资源路径是文件还是目录
-            if (file.isDirectory())
-            {
+            if (file.isDirectory()) {
                 findServices(basePackage + "." + file.getName());
-            }
-            else
-            {
+            } else {
                 // 如果是文件，那么需要将文件的全限定名称缓存到serviceCache中
                 String filename = file.getName();
-                if (filename.endsWith(".class"))
-                {
+                if (filename.endsWith(".class")) {
                     String fQFileName = basePackage + "." + file.getName();
                     serviceCache.add(fQFileName.replace(".class", ""));
                 }
@@ -68,25 +64,24 @@ public class ServiceRegistry implements Registry
     }
     
     @Override
-    public void registr(URL url)
-    {
+    public void registr(URL url) {
         // TODO Auto-generated method stub
     }
-
+    
     /**
      * 通过参数获取调用器
      * @param body 目前为止是具体类型，后面需要改为执行类型
      * @return
-     * @throws ClassNotFoundException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
-     * @throws SecurityException 
-     * @throws NoSuchMethodException 
+     * @throws ClassNotFoundException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws SecurityException
+     * @throws NoSuchMethodException
      */
     public static Invoker getInvoker(RequestBody body) throws ReflectiveOperationException {
         return null;
     }
-
+    
     /**
      * 获取调用点
      * @param body
@@ -100,8 +95,12 @@ public class ServiceRegistry implements Registry
         if (serviceMapper.containsKey(className)) {
             clazz = serviceMapper.get(className);
         } else {
-            // TODO:这里实现不优雅，需要修改
-            clazz = Class.forName(serviceCache.get(0)).newInstance();
+            // 如果全限定名服务不存在，那么直接返回空
+            String serviceUniqueName = getServiceName(className);
+            if (null == serviceUniqueName) {
+                return null;
+            }
+            clazz = Class.forName(serviceUniqueName).newInstance();
             serviceMapper.put(className, clazz);
         }
         String methodName = body.getMethodName();
@@ -109,6 +108,37 @@ public class ServiceRegistry implements Registry
         Method method = clazz.getClass().getMethod(methodName, paramTypes);
         Object[] paramValues = body.getParamValues();
         return new RpcInvocation(clazz, method, paramValues);
+    }
+    
+    /**
+     * 根据接口全限定名获取实现的服务的全限定名
+     * @param className
+     * @return
+     */
+    private static String getServiceName(final String className) {
+        if (serviceCache.isEmpty()) {
+            return null;
+        }
+        if (serviceNameCache.containsKey(className)) {
+            return serviceNameCache.get(className);
+        }
+        for (String serviceName : serviceCache) {
+            try {
+                Class<?> clazz = Class.forName(serviceName);
+                Class<?>[] interfaces = clazz.getInterfaces();
+                for (Class<?> inter : interfaces) {
+                    // 找到了实现了接口的服务
+                    // TODO:还需要做同名服务的重复判断
+                    if (Objects.equals(className, inter.getName())) {
+                        serviceNameCache.put(className, serviceName);
+                        return serviceName;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+        return null;
     }
     
 }
