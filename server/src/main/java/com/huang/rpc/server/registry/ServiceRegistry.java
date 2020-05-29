@@ -10,10 +10,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.huang.rpc.api.request.RequestBody;
+import com.huang.rpc.server.config.GlobalConfig;
+import com.huang.rpc.server.exception.RpcException;
 import com.huang.rpc.server.handler.Invocation;
 import com.huang.rpc.server.handler.Invoker;
 import com.huang.rpc.server.handler.RpcInvocation;
+
 
 /**
  * 对放到指定目录下的service服务
@@ -21,6 +27,8 @@ import com.huang.rpc.server.handler.RpcInvocation;
  *
  */
 public class ServiceRegistry implements Registry {
+    
+    private static final Logger log = LoggerFactory.getLogger(ServiceRegistry.class);
     
     // service全限定名称缓存
     public static final List<String> serviceCache = new ArrayList<>();
@@ -98,7 +106,7 @@ public class ServiceRegistry implements Registry {
             // 如果全限定名服务不存在，那么直接返回空
             String serviceUniqueName = getServiceName(className);
             if (null == serviceUniqueName) {
-                return null;
+                throw new RpcException(GlobalConfig.ExceptionDir.UNKNOWN_EXCEPTION);
             }
             clazz = Class.forName(serviceUniqueName).newInstance();
             serviceMapper.put(className, clazz);
@@ -135,7 +143,7 @@ public class ServiceRegistry implements Registry {
                     }
                 }
             } catch (ClassNotFoundException e) {
-                return null;
+                log.error("没有找到实现者:{}", e.getMessage(), e);
             }
         }
         return null;
