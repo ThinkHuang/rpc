@@ -3,23 +3,25 @@ package com.huang.rpc.server.registry;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.huang.rpc.api.request.RequestBody;
 import com.huang.rpc.server.config.GlobalConfig;
+import com.huang.rpc.server.constants.ExceptionConstants;
 import com.huang.rpc.server.exception.RpcException;
 import com.huang.rpc.server.handler.Invocation;
 import com.huang.rpc.server.handler.Invoker;
 import com.huang.rpc.server.handler.RpcInvocation;
-
 
 /**
  * 对放到指定目录下的service服务
@@ -31,13 +33,13 @@ public class ServiceRegistry implements Registry {
     private static final Logger log = LoggerFactory.getLogger(ServiceRegistry.class);
     
     // service全限定名称缓存
-    public static final List<String> serviceCache = new ArrayList<>();
+    private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
     
     // 接口名和服务名的映射关系缓存
-    public static final Map<String, String> serviceNameCache = new ConcurrentHashMap<>();
+    private static final Map<String, String> serviceNameCache = new ConcurrentHashMap<>();
     
     // 服务名称和实例映射关系缓存
-    private static final Map<String, Object> serviceMapper = new HashMap<>();
+    private static final Map<String, Object> serviceMapper = new ConcurrentHashMap<>();
     
     @Override
     public void publish(String basePackage) {
@@ -123,30 +125,49 @@ public class ServiceRegistry implements Registry {
      * @param className
      * @return
      */
-    private static String getServiceName(final String className) {
+    private static synchronized String getServiceName(final String className) {
         if (serviceCache.isEmpty()) {
             return null;
         }
         if (serviceNameCache.containsKey(className)) {
             return serviceNameCache.get(className);
         }
+        // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
+        Set<String> targetServiceSet = new HashSet<>();
         for (String serviceName : serviceCache) {
             try {
                 Class<?> clazz = Class.forName(serviceName);
                 Class<?>[] interfaces = clazz.getInterfaces();
                 for (Class<?> inter : interfaces) {
                     // 找到了实现了接口的服务
-                    // TODO:还需要做同名服务的重复判断
                     if (Objects.equals(className, inter.getName())) {
-                        serviceNameCache.put(className, serviceName);
-                        return serviceName;
+                        targetServiceSet.add(serviceName);
                     }
                 }
+                if (targetServiceSet.size() == 1) {
+                    // TODO:依赖于JDK的版本，这里实现不优雅
+                    Optional<String> optional = targetServiceSet.stream().findFirst();
+                    if (optional.isPresent()) {
+                        String targetServiceName = optional.get();
+                        serviceNameCache.put(className, targetServiceName);
+                    }
+                } else if (targetServiceSet.size() > 1) {
+                    throw new RpcException(ExceptionConstants.MULTIPLE_SERVICE_EXCEPTION);
+                }
+                return serviceName;
             } catch (ClassNotFoundException e) {
                 log.error("没有找到实现者:{}", e.getMessage(), e);
             }
         }
         return null;
+    }
+    
+    /**
+     * Just for test provider
+     * @return
+     */
+    public static List<String> getServicecache() {
+        return serviceCache;
     }
     
 }

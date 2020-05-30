@@ -6,6 +6,6 @@ public class ServiceRegistryTest {
     public static void main(String[] args) {
         ServiceRegistry registry = new ServiceRegistry();
         registry.publish("com.huang.rpc.server.service");
-        System.out.println(ServiceRegistry.serviceCache);
+        System.out.println(ServiceRegistry.getServicecache());
     }
 }

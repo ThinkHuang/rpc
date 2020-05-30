@@ -16,5 +16,6 @@ public interface GlobalConfig
         int BIZ_EXCEPTION = 3;
         int FORBIDDEN_EXCEPTION = 4;
         int SERIALIZATION_EXCEPTION = 5;
+        int MULTIPLE_SERVICE_EXCEPTION = 6;
     }
 }
