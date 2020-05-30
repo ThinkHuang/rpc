@@ -134,13 +134,14 @@ public class ServiceRegistry implements Registry {
         }
         // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
         Set<String> targetServiceSet = new HashSet<>();
+        // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特点的目录，同时也考虑做系统服务和自定义服务的隔离
         for (String serviceName : serviceCache) {
             try {
                 Class<?> clazz = Class.forName(serviceName);
                 Class<?>[] interfaces = clazz.getInterfaces();
-                for (Class<?> inter : interfaces) {
+                for (Class<?> interfaceClass : interfaces) {
                     // 找到了实现了接口的服务
-                    if (Objects.equals(className, inter.getName())) {
+                    if (Objects.equals(className, interfaceClass.getName())) {
                         targetServiceSet.add(serviceName);
                     }
                 }
