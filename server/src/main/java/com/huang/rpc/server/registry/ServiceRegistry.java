@@ -16,19 +16,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.huang.rpc.api.request.RequestBody;
-import com.huang.rpc.server.config.GlobalConfig;
 import com.huang.rpc.server.constants.ExceptionConstants;
+import com.huang.rpc.server.constants.LoaderConstants;
 import com.huang.rpc.server.exception.RpcException;
 import com.huang.rpc.server.handler.Invocation;
 import com.huang.rpc.server.handler.Invoker;
 import com.huang.rpc.server.handler.RpcInvocation;
+import com.huang.rpc.server.init.support.AbstractLoader;
 
 /**
  * 对放到指定目录下的service服务
  * @author Administrator
  *
  */
-public class ServiceRegistry implements Registry {
+public class ServiceRegistry extends AbstractLoader implements Registry {
     
     private static final Logger log = LoggerFactory.getLogger(ServiceRegistry.class);
     
@@ -82,11 +83,7 @@ public class ServiceRegistry implements Registry {
      * 通过参数获取调用器
      * @param body 目前为止是具体类型，后面需要改为执行类型
      * @return
-     * @throws ClassNotFoundException
-     * @throws IllegalAccessException
-     * @throws InstantiationException
-     * @throws SecurityException
-     * @throws NoSuchMethodException
+     * @throws ReflectiveOperationException
      */
     public static Invoker getInvoker(RequestBody body) throws ReflectiveOperationException {
         return null;
@@ -102,13 +99,17 @@ public class ServiceRegistry implements Registry {
         Object clazz = null;
         String className = body.getClassName();
         // 找到服务名
-        if (serviceMapper.containsKey(className)) {
+        if (log.isInfoEnabled()) {
+            log.info("{} singleton : prototype", getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
+        }
+        boolean singleton = Objects.equals("true", getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
+        if (singleton && serviceMapper.containsKey(className)) {
             clazz = serviceMapper.get(className);
         } else {
             // 如果全限定名服务不存在，那么直接返回空
-            String serviceUniqueName = getServiceName(className);
+            String serviceUniqueName = getServiceName(className, singleton);
             if (null == serviceUniqueName) {
-                throw new RpcException(GlobalConfig.ExceptionDir.UNKNOWN_EXCEPTION);
+                throw new RpcException(ExceptionConstants.UNKNOWN_EXCEPTION);
             }
             clazz = Class.forName(serviceUniqueName).newInstance();
             serviceMapper.put(className, clazz);
@@ -122,23 +123,27 @@ public class ServiceRegistry implements Registry {
     
     /**
      * 根据接口全限定名获取实现的服务的全限定名
-     * @param className
+     * @param className class名称
+     * @param singleton 是否单例
      * @return
      */
-    private static synchronized String getServiceName(final String className) {
+    private static synchronized String getServiceName(final String className, boolean singleton) {
         if (serviceCache.isEmpty()) {
             return null;
         }
-        if (serviceNameCache.containsKey(className)) {
+        if (singleton && serviceNameCache.containsKey(className)) {
             return serviceNameCache.get(className);
         }
         // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
         Set<String> targetServiceSet = new HashSet<>();
-        // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特点的目录，同时也考虑做系统服务和自定义服务的隔离
+        // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特定的目录的服务，同时也考虑做系统服务和自定义服务的隔离
         for (String serviceName : serviceCache) {
             try {
                 Class<?> clazz = Class.forName(serviceName);
                 Class<?>[] interfaces = clazz.getInterfaces();
+                if (log.isInfoEnabled()) {
+                    log.info("create a new service ...");
+                }
                 for (Class<?> interfaceClass : interfaces) {
                     // 找到了实现了接口的服务
                     if (Objects.equals(className, interfaceClass.getName())) {
@@ -157,7 +162,7 @@ public class ServiceRegistry implements Registry {
                 }
                 return serviceName;
             } catch (ClassNotFoundException e) {
-                log.error("没有找到实现者:{}", e.getMessage(), e);
+                log.error("no service found:{}", e.getMessage(), e);
             }
         }
         return null;
@@ -170,5 +175,5 @@ public class ServiceRegistry implements Registry {
     public static List<String> getServicecache() {
         return serviceCache;
     }
-    
+
 }
