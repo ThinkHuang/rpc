@@ -29,9 +29,9 @@ import com.huang.rpc.server.init.support.AbstractLoader;
  * @author Administrator
  *
  */
-public class ServiceRegistry extends AbstractLoader implements Registry {
+public class DefaultServiceRegistry extends AbstractLoader implements Registry {
     
-    private static final Logger log = LoggerFactory.getLogger(ServiceRegistry.class);
+    private static final Logger log = LoggerFactory.getLogger(DefaultServiceRegistry.class);
     
     // service全限定名称缓存
     private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
@@ -135,11 +135,11 @@ public class ServiceRegistry extends AbstractLoader implements Registry {
             return serviceNameCache.get(className);
         }
         // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
-        Set<String> targetServiceSet = new HashSet<>();
+        Set<String> serviceNames = new HashSet<>();
         // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特定的目录的服务，同时也考虑做系统服务和自定义服务的隔离
-        for (String serviceName : serviceCache) {
+        for (String serviceClassName : serviceCache) {
             try {
-                Class<?> clazz = Class.forName(serviceName);
+                Class<?> clazz = Class.forName(serviceClassName);
                 Class<?>[] interfaces = clazz.getInterfaces();
                 if (log.isInfoEnabled()) {
                     log.info("create a new service ...");
@@ -147,19 +147,20 @@ public class ServiceRegistry extends AbstractLoader implements Registry {
                 for (Class<?> interfaceClass : interfaces) {
                     // 找到了实现了接口的服务
                     if (Objects.equals(className, interfaceClass.getName())) {
-                        targetServiceSet.add(serviceName);
+                        serviceNames.add(serviceClassName);
                     }
                 }
-                if (targetServiceSet.size() == 1) {
+                if (serviceNames.size() == 1) {
                     // TODO:依赖于JDK的版本，这里实现不优雅
-                    Optional<String> optional = targetServiceSet.stream().findFirst();
+                    Optional<String> optional = serviceNames.stream().findFirst();
                     if (optional.isPresent()) {
                         String targetServiceName = optional.get();
                         serviceNameCache.put(className, targetServiceName);
                         return targetServiceName;
                     }
-                } else if (targetServiceSet.size() > 1) {
-                    throw new RpcException(ExceptionConstants.MULTIPLE_SERVICE_EXCEPTION);
+                } else if (serviceNames.size() > 1) {
+                    serviceNames.stream().forEach(serviceName -> serviceNameCache.put(className, serviceName));
+                    // throw new RpcException(ExceptionConstants.MULTIPLE_SERVICE_EXCEPTION);
                 } else {
                     // do nothing no instants return
                 }

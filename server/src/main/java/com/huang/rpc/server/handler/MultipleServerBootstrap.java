@@ -5,7 +5,7 @@ import java.net.InetSocketAddress;
 import com.huang.rpc.server.config.GlobalConfig;
 import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.init.support.RpcLoader;
-import com.huang.rpc.server.registry.ServiceRegistry;
+import com.huang.rpc.server.registry.DefaultServiceRegistry;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -36,7 +36,7 @@ public class MultipleServerBootstrap extends AbstractBootstrap
      */
     public MultipleServerBootstrap()
     {
-        new ServiceRegistry().publish(GlobalConfig.BASE_PACKAGE);
+        new DefaultServiceRegistry().publish(GlobalConfig.BASE_PACKAGE);
     }
     
     @Override

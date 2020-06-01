@@ -1,7 +1,7 @@
 package com.huang.rpc.server.handler;
 
 import com.huang.rpc.api.request.RequestBody;
-import com.huang.rpc.server.registry.ServiceRegistry;
+import com.huang.rpc.server.registry.ConcurrentServiceRegistry;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
@@ -19,7 +19,7 @@ public class EchoServerHandler extends ChannelHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // client发送过来的请求实体
         RequestBody body = (RequestBody)msg;
-        Invocation invocation = ServiceRegistry.getInvocation(body);
+        Invocation invocation = ConcurrentServiceRegistry.getInvocation(body);
         if (null != invocation) {
             Object result = invocation.invoke();
             ctx.writeAndFlush(result);
