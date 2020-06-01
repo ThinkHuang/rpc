@@ -100,7 +100,7 @@ public class ServiceRegistry extends AbstractLoader implements Registry {
         String className = body.getClassName();
         // 找到服务名
         if (log.isInfoEnabled()) {
-            log.info("{} singleton : prototype", getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
+            log.info("{} ? singleton : prototype", getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         }
         boolean singleton = Objects.equals("true", getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         if (singleton && serviceMapper.containsKey(className)) {
@@ -156,11 +156,13 @@ public class ServiceRegistry extends AbstractLoader implements Registry {
                     if (optional.isPresent()) {
                         String targetServiceName = optional.get();
                         serviceNameCache.put(className, targetServiceName);
+                        return targetServiceName;
                     }
                 } else if (targetServiceSet.size() > 1) {
                     throw new RpcException(ExceptionConstants.MULTIPLE_SERVICE_EXCEPTION);
+                } else {
+                    // do nothing no instants return
                 }
-                return serviceName;
             } catch (ClassNotFoundException e) {
                 log.error("no service found:{}", e.getMessage(), e);
             }
