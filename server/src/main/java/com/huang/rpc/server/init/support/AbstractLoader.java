@@ -18,7 +18,7 @@ public class AbstractLoader implements Loader
 
 private static final Logger log = LoggerFactory.getLogger(RpcLoader.class);
     
-    protected static volatile Map<String, String> propertyMap = new HashMap<>();
+    protected static Map<String, String> propertyMap = new HashMap<>();
     
     @Override
     public void load(String properties)
@@ -46,7 +46,7 @@ private static final Logger log = LoggerFactory.getLogger(RpcLoader.class);
         }
     }
 
-    public static Map<String, String> getPropertyMap()
+    public Map<String, String> getPropertyMap()
     {
         return propertyMap;
     }

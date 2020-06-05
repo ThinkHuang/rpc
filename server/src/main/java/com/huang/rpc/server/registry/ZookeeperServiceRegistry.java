@@ -2,11 +2,11 @@ package com.huang.rpc.server.registry;
 
 import java.net.URL;
 
-public class ZookeeperServiceRegistry implements Registry
+public class ZookeeperServiceRegistry extends AbstractServiceRegistry
 {
 
     @Override
-    public void publish(String basePackage)
+    public void doPublish(String basePackage)
     {
         
     }

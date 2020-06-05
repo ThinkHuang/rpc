@@ -2,11 +2,11 @@ package com.huang.rpc.server.registry;
 
 import java.net.URL;
 
-public class RedisServiceRegistry implements Registry
+public class RedisServiceRegistry extends AbstractServiceRegistry
 {
     
     @Override
-    public void publish(String basePackage)
+    public void doPublish(String basePackage)
     {
         
     }

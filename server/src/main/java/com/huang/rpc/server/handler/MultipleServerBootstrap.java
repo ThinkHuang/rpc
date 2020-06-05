@@ -3,8 +3,6 @@ package com.huang.rpc.server.handler;
 import java.net.InetSocketAddress;
 
 import com.huang.rpc.server.config.GlobalConfig;
-import com.huang.rpc.server.init.Loader;
-import com.huang.rpc.server.init.support.RpcLoader;
 import com.huang.rpc.server.registry.DefaultServiceRegistry;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -22,14 +20,6 @@ import io.netty.handler.codec.serialization.ObjectEncoder;
 
 public class MultipleServerBootstrap extends AbstractBootstrap
 {
-    
-    static
-    {
-        // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
-        // TODO:后续考虑使用热更新技术来动态获取配置文件,需要使用后台线程定时读取文件的更新时间
-        Loader loader = new RpcLoader();
-        loader.load(GlobalConfig.RPC_PROPERTIES);
-    }
     
     /**
      * 在ServerBootstrap中进行服务发现和注册
