@@ -52,7 +52,7 @@ public class DefaultServiceRegistry extends AbstractServiceRegistry {
     
     @Override
     public void doPublish(String basePackage) {
-        
+        // TODO:为后面服务注册提供基础
         // 服务注册
         // register();
     }

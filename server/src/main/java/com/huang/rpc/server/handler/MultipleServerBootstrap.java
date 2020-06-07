@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 
 import com.huang.rpc.server.config.GlobalConfig;
 import com.huang.rpc.server.registry.DefaultServiceRegistry;
+import com.huang.rpc.server.registry.Registry;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -26,7 +27,9 @@ public class MultipleServerBootstrap extends AbstractBootstrap
      */
     public MultipleServerBootstrap()
     {
-        new DefaultServiceRegistry().publish(GlobalConfig.BASE_PACKAGE);
+        // TODO:可以通过不同的服务注册机制
+        Registry registry = new DefaultServiceRegistry();
+        registry.publish(GlobalConfig.BASE_PACKAGE);
     }
     
     @Override
