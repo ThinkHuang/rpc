@@ -24,7 +24,7 @@ import io.netty.handler.codec.serialization.ObjectEncoder;
 public class RPCProxyFactory implements ProxyFactory {
     
     @SuppressWarnings("unchecked")
-    public <T> T createProxy(final Class<?> target) {
+    public <T> T createProxy(final Class<?> target, final String version, final String protocol) {
         return (T)Proxy.newProxyInstance(target.getClassLoader(), 
                                         new Class[]{target}, 
                                         new InvocationHandler() {
@@ -39,6 +39,8 @@ public class RPCProxyFactory implements ProxyFactory {
                 body.setMethodName(method.getName());
                 body.setParamTypes(method.getParameterTypes());
                 body.setParamValues(args);
+                body.setVersion(version);
+                body.setProtocol(protocol);
                 return send(body);
             }
 

@@ -9,7 +9,7 @@ public class EchoClient
     public static void main(String[] args)
     {
         ProxyFactory factory = new RPCProxyFactory();
-        UserService proxy = factory.createProxy(UserService.class);
+        UserService proxy = factory.createProxy(UserService.class, "v1.0", "http");
         System.out.print(proxy.say("Hello World"));
     }
 }

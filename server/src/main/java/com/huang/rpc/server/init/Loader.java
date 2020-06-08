@@ -1,5 +1,7 @@
 package com.huang.rpc.server.init;
 
+import java.util.Map;
+
 /**
  * 抽象加载器
  * @author huangyejun
@@ -12,4 +14,10 @@ public interface Loader
      * @param properties
      */
     void load(String properties);
+
+    /**
+     * 获取映射文件内容
+     * @return
+     */
+    Map<String, String> getPropertyMap();
 }

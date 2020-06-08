@@ -3,7 +3,7 @@ package com.huang.rpc.server.handler;
 import java.net.InetSocketAddress;
 
 import com.huang.rpc.server.config.GlobalConfig;
-import com.huang.rpc.server.registry.DefaultServiceRegistry;
+import com.huang.rpc.server.registry.ConcurrentServiceRegistry;
 import com.huang.rpc.server.registry.Registry;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -28,7 +28,7 @@ public class MultipleServerBootstrap extends AbstractBootstrap
     public MultipleServerBootstrap()
     {
         // TODO:可以通过不同的服务注册机制
-        Registry registry = new DefaultServiceRegistry();
+        Registry registry = new ConcurrentServiceRegistry();
         registry.publish(GlobalConfig.BASE_PACKAGE);
     }
     

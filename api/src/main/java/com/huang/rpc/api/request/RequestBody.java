@@ -31,4 +31,14 @@ public class RequestBody implements Serializable{
      * 参数值列表
      */
     private Object[] paramValues;
+    
+    /**
+     * 版本号
+     */
+    private String version;
+    
+    /**
+     * 协议
+     */
+    private String protocol;
 }

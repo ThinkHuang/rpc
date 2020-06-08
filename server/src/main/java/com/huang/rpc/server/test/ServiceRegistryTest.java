@@ -1,11 +1,11 @@
 package com.huang.rpc.server.test;
 
-import com.huang.rpc.server.registry.DefaultServiceRegistry;
+import com.huang.rpc.server.registry.ConcurrentServiceRegistry;
 
 public class ServiceRegistryTest {
     public static void main(String[] args) {
-        DefaultServiceRegistry registry = new DefaultServiceRegistry();
+        ConcurrentServiceRegistry registry = new ConcurrentServiceRegistry();
         registry.publish("com.huang.rpc.server.service");
-        System.out.println(DefaultServiceRegistry.getServicecache());
+        System.out.println(ConcurrentServiceRegistry.getServicecache());
     }
 }
