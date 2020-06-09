@@ -1,7 +1,7 @@
 package com.huang.rpc.server.handler;
 
 import com.huang.rpc.api.request.RequestBody;
-import com.huang.rpc.server.registry.ConcurrentServiceRegistry;
+import com.huang.rpc.server.registry.support.ConcurrentServiceRegistry;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;

@@ -1,12 +1,10 @@
-package com.huang.rpc.server.registry;
+package com.huang.rpc.server.registry.support;
 
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +21,7 @@ import com.huang.rpc.server.handler.Invoker;
 import com.huang.rpc.server.handler.RpcInvocation;
 import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.init.support.RpcLoader;
+import com.huang.rpc.server.registry.AbstractServiceRegistry;
 
 
 /**
@@ -87,8 +86,8 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
             log.info("{} ? singleton : prototype", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         }
         // TODO:开始实现基于协议和版本控制，建议使用注解
-        String version = body.getVersion();
-        String protocol = body.getProtocol();
+        // String version = body.getVersion();
+        // String protocol = body.getProtocol();
         boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         // TODO：这里不仅仅只能根据className进行缓存，还得考虑和version和protocol进行hash
         if (singleton && serviceMapper.containsKey(className)) {
@@ -116,7 +115,7 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
      * @return
      */
     private static synchronized String getServiceName(final String className, boolean singleton) {
-        if (getServicecache().isEmpty()) {
+        if (getServiceCache().isEmpty()) {
             return null;
         }
         if (singleton && serviceNameCache.containsKey(className)) {
@@ -125,7 +124,7 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
         Set<String> serviceNames = new HashSet<>();
         // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特定的目录的服务，同时也考虑做系统服务和自定义服务的隔离
-        for (String serviceClassName : getServicecache()) {
+        for (String serviceClassName : getServiceCache()) {
             try {
                 Class<?> clazz = Class.forName(serviceClassName);
                 Class<?>[] interfaces = clazz.getInterfaces();
@@ -138,17 +137,11 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
                         serviceNames.add(serviceClassName);
                     }
                 }
-                if (serviceNames.size() == 1) {
-                    // TODO:依赖于JDK的版本，这里实现不优雅
-                    Optional<String> optional = serviceNames.stream().findFirst();
-                    if (optional.isPresent()) {
-                        String targetServiceName = optional.get();
-                        serviceNameCache.put(className, targetServiceName);
-                        return targetServiceName;
-                    }
-                } else if (serviceNames.size() > 1) {
+                if (!serviceNames.isEmpty()) {
+                    // 在加载的时候会采用覆盖模式，一旦服务满足，后续服务会覆盖掉先前注册的服务，
+                    // TODO：但是一旦服务启动，不再会重新覆盖，新的服务实例不会生效，这是一个问题，不能对服务的更新做相应，这里可以考虑做服务监听
                     serviceNames.stream().forEach(serviceName -> serviceNameCache.put(className, serviceName));
-                    // throw new RpcException(ExceptionConstants.MULTIPLE_SERVICE_EXCEPTION);
+                    return serviceNameCache.get(className);
                 } else {
                     // do nothing no instants return
                 }
@@ -159,12 +152,4 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         return null;
     }
     
-    /**
-     * Just for test provider
-     * @return
-     */
-    public static List<String> getServicecache() {
-        return getServicecache();
-    }
-
 }

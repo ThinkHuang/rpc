@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public abstract class AbstractServiceRegistry implements Registry {
 
     // service全限定名称缓存
-    private final List<String> serviceCache = new CopyOnWriteArrayList<>();
+    private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
     
     @Override
     public void publish(String basePackage) {
@@ -47,7 +47,7 @@ public abstract class AbstractServiceRegistry implements Registry {
     
     public abstract void doPublish(String basePackage);
 
-    public List<String> getServiceCache() {
+    protected static List<String> getServiceCache() {
         return serviceCache;
     }
 }

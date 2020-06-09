@@ -3,8 +3,8 @@ package com.huang.rpc.server.handler;
 import java.net.InetSocketAddress;
 
 import com.huang.rpc.server.config.GlobalConfig;
-import com.huang.rpc.server.registry.ConcurrentServiceRegistry;
 import com.huang.rpc.server.registry.Registry;
+import com.huang.rpc.server.registry.support.ConcurrentServiceRegistry;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

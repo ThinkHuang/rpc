@@ -10,6 +10,6 @@ public class EchoClient
     {
         ProxyFactory factory = new RPCProxyFactory();
         UserService proxy = factory.createProxy(UserService.class, "v1.0", "http");
-        System.out.print(proxy.say("Hello World"));
+        System.out.println(proxy.say("Hello World"));
     }
 }
