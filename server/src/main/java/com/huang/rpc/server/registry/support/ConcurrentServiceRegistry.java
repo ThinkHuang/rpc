@@ -25,8 +25,8 @@ import com.huang.rpc.server.handler.RpcInvocation;
 import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.init.support.RpcLoader;
 import com.huang.rpc.server.registry.AbstractServiceRegistry;
-import com.sun.istack.internal.NotNull;
 
+import javax.validation.constraints.NotNull;
 
 /**
  * 对放到指定目录下的service服务
@@ -94,11 +94,11 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         if (log.isInfoEnabled()) {
             log.info("{} ? singleton : prototype", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         }
-        // TODO:开始实现基于协议和版本控制，建议使用注解
          String version = body.getVersion();
         // String protocol = body.getProtocol();
         boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         // TODO：这里不仅仅只能根据className进行缓存，还得考虑和version和protocol进行hash
+        // 目前对className和version进行hash，后续加入了protocol后，将会一起进行hash
         cacheKey = new CacheKey(className, version);
         if (singleton && serviceMapper.containsKey(getCacheKey())) {
             return (Invocation)serviceMapper.get(getCacheKey());
@@ -120,8 +120,7 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
      */
     private static Invocation getCertainInvocation(final List<String> serviceUniqueNames, final String versionName, final RequestBody body)
             throws ReflectiveOperationException {
-        // TODO：这时会实例化所有的实现，可否考虑做懒加载的实现
-        // 这里暂时做的是用到即初始化
+        // TODO:这里暂时做的是用到即初始化
         for (String serviceName : serviceUniqueNames) {
             Object clazz = Class.forName(serviceName).newInstance();
             Method method = clazz.getClass().getMethod(body.getMethodName(), body.getParamTypes());
