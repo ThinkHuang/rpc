@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.huang.rpc.api.request.RequestBody;
+import com.huang.rpc.server.annotation.Protocol;
 import com.huang.rpc.server.annotation.Version;
 import com.huang.rpc.server.config.GlobalConfig;
 import com.huang.rpc.server.constants.ExceptionConstants;
@@ -26,7 +27,6 @@ import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.init.support.RpcLoader;
 import com.huang.rpc.server.registry.AbstractServiceRegistry;
 import com.sun.istack.internal.NotNull;
-
 
 /**
  * 对放到指定目录下的service服务
@@ -51,8 +51,7 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
      */
     private static CacheKey cacheKey;
     
-    static
-    {
+    static {
         // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
         // TODO:后续考虑使用热更新技术来动态获取配置文件,需要使用后台线程定时读取文件的更新时间
         loader = new RpcLoader();
@@ -65,8 +64,6 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         // 服务注册
         // register();
     }
-    
-    
     
     @Override
     public void registr(URL url) {
@@ -94,51 +91,53 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         if (log.isInfoEnabled()) {
             log.info("{} ? singleton : prototype", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         }
-        // TODO:开始实现基于协议和版本控制，建议使用注解
-         String version = body.getVersion();
-        // String protocol = body.getProtocol();
+        String version = body.getVersion();
+        String protocol = body.getProtocol();
         boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
-        // TODO：这里不仅仅只能根据className进行缓存，还得考虑和version和protocol进行hash
-        cacheKey = new CacheKey(className, version);
+        cacheKey = new CacheKey(className, version, protocol);
         if (singleton && serviceMapper.containsKey(getCacheKey())) {
             return (Invocation)serviceMapper.get(getCacheKey());
         } else {
-            // 如果全限定名服务不存在，那么直接返回空
+            // 如果全限定名服务不存在，那么直接返回空--------------------*
             List<String> serviceUniqueNames = getServiceName(className, singleton);
             if (null == serviceUniqueNames) {
                 throw new RpcException(ExceptionConstants.UNKNOWN_EXCEPTION);
             }
-            return getCertainInvocation(serviceUniqueNames, version, body);
+            return getCertainInvocation(serviceUniqueNames, body);
         }
     }
     
     /**
      * 获取具体的服务实例
      * @param serviceUniqueNames
-     * @param versionName
      * @param body
      */
-    private static Invocation getCertainInvocation(final List<String> serviceUniqueNames, final String versionName, final RequestBody body)
-            throws ReflectiveOperationException {
+    private static Invocation getCertainInvocation(final List<String> serviceUniqueNames, final RequestBody body) throws ReflectiveOperationException {
         // TODO：这时会实例化所有的实现，可否考虑做懒加载的实现
         // 这里暂时做的是用到即初始化
+        final String versionName = body.getVersion();
+        final String protocolName = body.getProtocol();
         for (String serviceName : serviceUniqueNames) {
             Object clazz = Class.forName(serviceName).newInstance();
             Method method = clazz.getClass().getMethod(body.getMethodName(), body.getParamTypes());
-            if (method.isAnnotationPresent(Version.class)) {
+            if (method.isAnnotationPresent(Version.class) && method.isAnnotationPresent(Protocol.class)) {
                 Version version = method.getAnnotation(Version.class);
-                if (version.value().equals(versionName)) {
+                Protocol protocol = method.getAnnotation(Protocol.class);
+                if (version.value().equalsIgnoreCase(versionName) && protocol.value().equalsIgnoreCase(protocolName)) {
                     Invocation invocation = new RpcInvocation(clazz, method, body.getParamValues());
                     serviceMapper.put(getCacheKey(), invocation);
                     return invocation;
                 }
+            } else {
+                // 如果没有版本控制和协议控制，返回第一个找到的实例。
+                Invocation invocation = new RpcInvocation(clazz, method, body.getParamValues());
+                serviceMapper.put(getCacheKey(), invocation);
+                return invocation;
             }
         }
         return null;
     }
-
-
-
+    
     /**
      * 根据接口全限定名获取实现的服务的全限定名
      * @param className class名称
@@ -196,20 +195,33 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         private String className;
         
         /**
-         * 版本实例
+         * 版本
          */
         private String version;
+        
+        /**
+         * 协议
+         */
+        private String protocol;
         
         public CacheKey(String className, String version) {
             this.className = className;
             this.version = version;
         }
-
+        
+        public CacheKey(String className, String version, String protocol) {
+            this(className, version);
+            this.protocol = protocol;
+        }
+        
         @Override
         public final int hashCode() {
-            return className.hashCode() ^ version.hashCode();
+            if (null == protocol) {
+                return className.hashCode() ^ version.hashCode();
+            }
+            return className.hashCode() ^ version.hashCode() ^ protocol.hashCode();
         }
-
+        
     }
     
 }
