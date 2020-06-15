@@ -37,11 +37,15 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     
     private static final Logger log = LoggerFactory.getLogger(ConcurrentServiceRegistry.class);
     
+    /**
+     * TODO：基于服务实例可以只缓存实现者，但是，如果是做多版本控制和协议控制，那么就需要抽象到方法层面了。
+     * 现在要将服务实现者和方法实例分开实现
+     */
     // 接口名和服务名的映射关系缓存(这里服务开始支持多服务)
     private static final Map<Integer, List<String>> serviceNameCache = new ConcurrentHashMap<>();
     
     // 实例池，所有的服务实例都会缓存在该对象中
-    private static final Map<Integer, Object> serviceMapper = new ConcurrentHashMap<>();
+    private static final Map<Integer, Invocation> serviceMapper = new ConcurrentHashMap<>();
     
     private static Loader loader = null;
     
@@ -50,6 +54,10 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
      * 该成员变量不能为空
      */
     private static CacheKey cacheKey;
+    
+//    public ConcurrentServiceRegistry(RequestBody body) {
+//        cacheKey = new CacheKey(body.getClassName(), body.getVersion(), body.getProtocol());
+//    }
     
     static {
         // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
@@ -91,12 +99,10 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
         if (log.isInfoEnabled()) {
             log.info("{} ? singleton : prototype", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         }
-        String version = body.getVersion();
-        String protocol = body.getProtocol();
+        cacheKey = new CacheKey(className, body.getVersion(), body.getProtocol());
         boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
-        cacheKey = new CacheKey(className, version, protocol);
         if (singleton && serviceMapper.containsKey(getCacheKey())) {
-            return (Invocation)serviceMapper.get(getCacheKey());
+            return serviceMapper.get(getCacheKey());
         } else {
             // 如果全限定名服务不存在，那么直接返回空--------------------*
             List<String> serviceUniqueNames = getServiceName(className, singleton);
