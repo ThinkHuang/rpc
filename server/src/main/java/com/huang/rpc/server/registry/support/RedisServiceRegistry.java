@@ -18,5 +18,4 @@ public class RedisServiceRegistry extends AbstractServiceRegistry
     {
         
     }
-    
 }
