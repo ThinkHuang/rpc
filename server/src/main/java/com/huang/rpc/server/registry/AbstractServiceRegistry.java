@@ -11,6 +11,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +30,11 @@ public abstract class AbstractServiceRegistry implements Registry {
     
     private static final Logger log = LoggerFactory.getLogger(AbstractServiceRegistry.class);
 
+    /********************************Static Area********************************/
     // service全限定名称缓存
     private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
     
-    private static Loader loader = null;
+    private static final Loader loader;
     
     static {
         // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
@@ -40,6 +43,17 @@ public abstract class AbstractServiceRegistry implements Registry {
         loader.load(GlobalConfig.RPC_PROPERTIES);
     }
     
+    /*******************************Member Variables****************************/
+    /**
+     * 该成员变量不能为空
+     */
+    @NotNull
+    protected CacheKey cacheKey;
+    
+    private int key;
+    
+    
+    /***********************************Public Method****************************************/
     @Override
     public void publish(String basePackage) {
         // 获取服务列表
@@ -48,8 +62,7 @@ public abstract class AbstractServiceRegistry implements Registry {
         doPublish(basePackage);
     }
     
-    public abstract void doPublish(String basePackage);
-
+    @Override
     public Invocation getInvocation(RequestBody body) throws ReflectiveOperationException
     {
         if (log.isInfoEnabled()) {
@@ -59,8 +72,7 @@ public abstract class AbstractServiceRegistry implements Registry {
         return doGetInvocation(singleton, body);
     }
     
-    protected abstract Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException;
-    
+    /***********************************Protected Method****************************************/
     /**
      * 获取具体的服务实例
      * @param serviceUniqueNames
@@ -91,7 +103,7 @@ public abstract class AbstractServiceRegistry implements Registry {
      * @param singleton 是否单例
      * @return
      */
-    protected static synchronized List<String> getServiceName(final String className, boolean singleton) {
+    protected static synchronized List<String> getServiceName(final String className) {
         if (serviceCache.isEmpty()) {
             return null;
         }
@@ -122,6 +134,24 @@ public abstract class AbstractServiceRegistry implements Registry {
         return new ArrayList<>(serviceNames);
     }
     
+    /**
+     * 获取缓存key
+     * @return
+     */
+    protected synchronized int getCacheKey() {
+        if (0 != key) {
+            return key;
+        } 
+        key = cacheKey.hashCode();
+        return key;
+    }
+    
+    /***********************************Protected Method****************************************/
+    public abstract void doPublish(String basePackage);
+    
+    protected abstract Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException;
+    
+    /***********************************Private Method****************************************/
     private void findServices(String basePackage) {
         if (null == basePackage || "".equals(basePackage)) {
             return;
@@ -143,6 +173,46 @@ public abstract class AbstractServiceRegistry implements Registry {
                     serviceCache.add(fQFileName.replace(".class", ""));
                 }
             }
+        }
+    }
+    
+    /**
+     * 缓存键生成
+     *
+     */
+    protected static final class CacheKey {
+        
+        /**
+         * 接口类名称
+         */
+        private String className;
+        
+        /**
+         * 版本
+         */
+        private String version;
+        
+        /**
+         * 协议
+         */
+        private String protocol;
+        
+        public CacheKey(String className, String version) {
+            this.className = className;
+            this.version = version;
+        }
+        
+        public CacheKey(String className, String version, String protocol) {
+            this(className, version);
+            this.protocol = protocol;
+        }
+        
+        @Override
+        public final int hashCode() {
+            if (null == protocol) {
+                return className.hashCode() ^ version.hashCode();
+            }
+            return className.hashCode() ^ version.hashCode() ^ protocol.hashCode();
         }
     }
 }

@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,12 +31,6 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     
     // 实例池，所有的服务实例都会缓存在该对象中
     private static final Map<Integer, Invocation> serviceMapper = new ConcurrentHashMap<>();
-    
-    /**
-     * 该成员变量不能为空
-     */
-    @NotNull
-    private CacheKey cacheKey;
     
     @Override
     public void doPublish(String basePackage) {
@@ -78,7 +70,7 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
             // 如果全限定名服务不存在，那么直接返回空--------------------*
             List<String> serviceUniqueNames = serviceNameCache.get(getCacheKey());
             if (null == serviceUniqueNames) {
-                serviceUniqueNames = getServiceName(className, singleton);
+                serviceUniqueNames = getServiceName(className);
             }
             serviceNameCache.put(getCacheKey(), serviceUniqueNames);
             if (log.isInfoEnabled()) {
@@ -89,50 +81,4 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
             return invocation;
         }
     }
-    
-    protected int getCacheKey() {
-        return cacheKey.hashCode();
-    }
-    
-    /**
-     * 缓存键生成
-     *
-     */
-    static final class CacheKey {
-        
-        /**
-         * 接口类名称
-         */
-        private String className;
-        
-        /**
-         * 版本
-         */
-        private String version;
-        
-        /**
-         * 协议
-         */
-        private String protocol;
-        
-        public CacheKey(String className, String version) {
-            this.className = className;
-            this.version = version;
-        }
-        
-        public CacheKey(String className, String version, String protocol) {
-            this(className, version);
-            this.protocol = protocol;
-        }
-        
-        @Override
-        public final int hashCode() {
-            if (null == protocol) {
-                return className.hashCode() ^ version.hashCode();
-            }
-            return className.hashCode() ^ version.hashCode() ^ protocol.hashCode();
-        }
-        
-    }
-    
 }
