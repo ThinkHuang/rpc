@@ -13,6 +13,8 @@ public class RegistryFactory
     
     private static Registry registry;
     
+    private RegistryFactory() {}
+    
     static {
         // TODO:目前默认实例化ConcurrentServiceRegistry，后续改到rpc.properties去动态配置
         registry = new ConcurrentServiceRegistry();
