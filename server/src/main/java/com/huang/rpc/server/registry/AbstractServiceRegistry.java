@@ -92,13 +92,13 @@ public abstract class AbstractServiceRegistry implements Registry {
      * @return
      */
     protected static synchronized List<String> getServiceName(final String className, boolean singleton) {
-        if (getServiceCache().isEmpty()) {
+        if (serviceCache.isEmpty()) {
             return null;
         }
         // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
         Set<String> serviceNames = new HashSet<>();
         // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特定的目录的服务，同时也考虑做系统服务和自定义服务的隔离
-        for (String serviceClassName : getServiceCache()) {
+        for (String serviceClassName : serviceCache) {
             try {
                 Class<?> clazz = Class.forName(serviceClassName);
                 Class<?>[] interfaces = clazz.getInterfaces();
@@ -120,10 +120,6 @@ public abstract class AbstractServiceRegistry implements Registry {
             }
         }
         return new ArrayList<>(serviceNames);
-    }
-    
-    protected static List<String> getServiceCache() {
-        return serviceCache;
     }
     
     private void findServices(String basePackage) {
