@@ -84,18 +84,21 @@ public abstract class AbstractServiceRegistry implements Registry {
         // 这里暂时做的是用到即初始化
         final String versionName = body.getVersion();
         final String protocolName = body.getProtocol();
+        Invocation invocation = null;
         for (String serviceName : serviceUniqueNames) {
             Object clazz = Class.forName(serviceName).newInstance();
             Method method = clazz.getClass().getMethod(body.getMethodName(), body.getParamTypes());
+            // 提前实例化invocation，当存在符合条件的service时，直接返回，否则返回最新版本
+            invocation = new RpcInvocation(clazz, method, body.getParamValues());
             if (method.isAnnotationPresent(Version.class) && method.isAnnotationPresent(Protocol.class)) {
                 Version version = method.getAnnotation(Version.class);
                 Protocol protocol = method.getAnnotation(Protocol.class);
                 if (version.value().equalsIgnoreCase(versionName) && protocol.value().equalsIgnoreCase(protocolName)) {
-                    return new RpcInvocation(clazz, method, body.getParamValues());
+                    return invocation;
                 }
             } 
         }
-        return null;
+        return invocation;
     }
     
     /**
@@ -108,7 +111,7 @@ public abstract class AbstractServiceRegistry implements Registry {
         if (serviceCache.isEmpty()) {
             return null;
         }
-        // TODO：目前该集合没有特别的用途，由于只支持单服务，后期支持SPI的多服务模式，该Set即可发挥作用
+        // TODO：基于dubbo的@SPI注解完成服务注册
         Set<String> serviceNames = new HashSet<>();
         // TODO:这里需要遍历所有的服务名称，是否考虑使用region的概念，来达到获取特定的目录的服务，同时也考虑做系统服务和自定义服务的隔离
         for (String serviceClassName : serviceCache) {
@@ -121,13 +124,7 @@ public abstract class AbstractServiceRegistry implements Registry {
                         serviceNames.add(serviceClassName);
                     }
                 }
-//                if (!serviceNames.isEmpty()) {
-//                    // 在加载的时候会采用覆盖模式，一旦服务满足，后续服务会覆盖掉先前注册的服务，
-//                    // TODO：但是一旦服务启动，不再会重新覆盖，新的服务实例不会生效，这是一个问题，不能对服务的更新做相应，这里可以考虑做服务监听
-//                    // 现在开始返回一个接口的多个实现实例
-//                } else {
-//                    // do nothing no instants return
-//                }
+                // TODO：但是一旦服务启动，不再会重新覆盖，新的服务实例不会生效，这是一个问题，不能对服务的更新做响应，这里可以考虑做服务监听
             } catch (ClassNotFoundException e) {
                 log.error("no service found:{}", e.getMessage(), e);
             }
@@ -148,7 +145,7 @@ public abstract class AbstractServiceRegistry implements Registry {
     }
     
     /***********************************Protected Method****************************************/
-    public abstract void doPublish(String basePackage);
+    protected abstract void doPublish(String basePackage);
     
     protected abstract Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException;
     
@@ -198,6 +195,10 @@ public abstract class AbstractServiceRegistry implements Registry {
          */
         private String protocol;
         
+        public CacheKey(String className) {
+            this(className, null);
+        }
+        
         public CacheKey(String className, String version) {
             this.className = className;
             this.version = version;
@@ -210,10 +211,14 @@ public abstract class AbstractServiceRegistry implements Registry {
         
         @Override
         public final int hashCode() {
-            if (null == protocol) {
-                return className.hashCode() ^ version.hashCode();
+            int hashcode = className.hashCode();
+            if (null != protocol) {
+                hashcode ^= protocol.hashCode();
+            } 
+            if (null != version) {
+                hashcode ^= version.hashCode();
             }
-            return className.hashCode() ^ version.hashCode() ^ protocol.hashCode();
+            return hashcode;
         }
     }
 }
