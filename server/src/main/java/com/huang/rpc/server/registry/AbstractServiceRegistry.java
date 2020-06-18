@@ -48,7 +48,7 @@ public abstract class AbstractServiceRegistry implements Registry {
      * 该成员变量不能为空
      */
     @NotNull
-    protected CacheKey cacheKey;
+    private CacheKey cacheKey;
     
     private int key;
     
@@ -69,6 +69,7 @@ public abstract class AbstractServiceRegistry implements Registry {
             log.info("{} ? singleton : prototype", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         }
         boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
+        cacheKey = new CacheKey(body.getClassName(), body.getVersion(), body.getProtocol());
         return doGetInvocation(singleton, body);
     }
     

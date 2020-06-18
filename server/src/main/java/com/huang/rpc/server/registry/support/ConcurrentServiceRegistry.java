@@ -14,8 +14,7 @@ import com.huang.rpc.server.handler.Invoker;
 import com.huang.rpc.server.registry.AbstractServiceRegistry;
 
 /**
- * 对放到指定目录下的service服务
- * @author Administrator
+ * @author huangyejun
  *
  */
 public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
@@ -63,7 +62,6 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     public Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException {
         String className = body.getClassName();
         // 找到服务名
-        cacheKey = new CacheKey(className, body.getVersion(), body.getProtocol());
         if (singleton && serviceMapper.containsKey(getCacheKey())) {
             return serviceMapper.get(getCacheKey());
         } else {
@@ -77,7 +75,9 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
                 log.info("服务实现接口为：{}", serviceUniqueNames);
             }
             Invocation invocation = getCertainInvocation(serviceUniqueNames, body);
-            serviceMapper.put(getCacheKey(), invocation);
+            if (null != invocation) {
+                serviceMapper.put(getCacheKey(), invocation);
+            }
             return invocation;
         }
     }
