@@ -25,8 +25,13 @@ import com.huang.rpc.server.handler.Invocation;
 import com.huang.rpc.server.handler.RpcInvocation;
 import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.init.support.RpcLoader;
+import com.huang.rpc.server.listener.Lifecycle;
+import com.huang.rpc.server.listener.LifecycleListener;
+import com.huang.rpc.server.listener.support.LifecycleEvent;
+import com.huang.rpc.server.listener.support.LifecycleSupport;
+import com.huang.rpc.server.listener.support.NewServiceDiscoveriedListener;
 
-public abstract class AbstractServiceRegistry implements Registry {
+public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     private static final Logger log = LoggerFactory.getLogger(AbstractServiceRegistry.class);
 
@@ -35,6 +40,8 @@ public abstract class AbstractServiceRegistry implements Registry {
     private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
     
     private static final Loader loader;
+    
+    private LifecycleSupport lifecycle = new LifecycleSupport(this);
     
     static {
         // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
@@ -73,9 +80,35 @@ public abstract class AbstractServiceRegistry implements Registry {
         return doGetInvocation(singleton, body);
     }
     
+    
+    
+    @Override
+    public void fireEvent(LifecycleEvent event)
+    {
+        // do nothing
+    }
+
+    @Override
+    public void addLifecycleListener(LifecycleListener listener)
+    {
+        // do nothing
+    }
+
+    @Override
+    public void removeLifecycleListener(LifecycleListener listener)
+    {
+        // do nothing  
+    }
+
+    @Override
+    public void registr(URL url)
+    {
+        
+    }
+
     /***********************************Protected Method****************************************/
     /**
-     * 获取具体的服务实例
+     * 获取具体的服务实例，如果走到该方法，说明在缓存中未找到合适的实例，这个时候就要触发事件监听
      * @param serviceUniqueNames
      * @param body
      */
@@ -94,10 +127,14 @@ public abstract class AbstractServiceRegistry implements Registry {
                 Version version = method.getAnnotation(Version.class);
                 Protocol protocol = method.getAnnotation(Protocol.class);
                 if (version.value().equalsIgnoreCase(versionName) && protocol.value().equalsIgnoreCase(protocolName)) {
+                    // 触发监听事件执行
+                    lifecycle.fireEvent(new LifecycleEvent(this));
                     return invocation;
                 }
             } 
         }
+        // 触发监听事件执行
+        lifecycle.fireEvent(new LifecycleEvent(this));
         return invocation;
     }
     
@@ -107,7 +144,7 @@ public abstract class AbstractServiceRegistry implements Registry {
      * @param singleton 是否单例
      * @return
      */
-    protected static synchronized List<String> getServiceName(final String className) {
+    protected synchronized List<String> getServiceName(final String className) {
         if (serviceCache.isEmpty()) {
             return null;
         }
@@ -125,10 +162,13 @@ public abstract class AbstractServiceRegistry implements Registry {
                     }
                 }
                 // TODO：但是一旦服务启动，不再会重新覆盖，新的服务实例不会生效，这是一个问题，不能对服务的更新做响应，这里可以考虑做服务监听
+                // 这里需要考虑的是新的服务实例是什么？新的服务实例将被xxxRegsitry发现，怎么发现的？如果搞不清楚这点将没法通过监听器监听到。
             } catch (ClassNotFoundException e) {
                 log.error("no service found:{}", e.getMessage(), e);
             }
         }
+        // 注册新的服务实例被发现事件
+        lifecycle.addLifecycleListener(new NewServiceDiscoveriedListener());
         return new ArrayList<>(serviceNames);
     }
     

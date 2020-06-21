@@ -9,7 +9,7 @@ import com.huang.rpc.server.listener.Lifecycle;
  * @author huangyejun
  *
  */
-public final class LifecycleEvent extends EventObject{
+public final class LifecycleEvent extends EventObject {
 
     /**
      * 
