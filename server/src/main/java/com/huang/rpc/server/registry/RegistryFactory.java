@@ -1,5 +1,8 @@
 package com.huang.rpc.server.registry;
 
+import com.huang.rpc.server.config.GlobalConfig;
+import com.huang.rpc.server.init.Loader;
+import com.huang.rpc.server.init.support.RpcLoader;
 import com.huang.rpc.server.registry.support.ConcurrentServiceRegistry;
 
 /**
@@ -10,12 +13,17 @@ import com.huang.rpc.server.registry.support.ConcurrentServiceRegistry;
 public class RegistryFactory
 {
     
-    
     private static Registry registry;
+    
+    private static final Loader loader;
     
     private RegistryFactory() {}
     
     static {
+        // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
+        // TODO:后续考虑使用热更新技术来动态获取配置文件,需要使用后台线程定时读取文件的更新时间
+        loader = new RpcLoader();
+        loader.load(GlobalConfig.RPC_PROPERTIES);
         // TODO:目前默认实例化ConcurrentServiceRegistry，后续改到rpc.properties去动态配置
         registry = new ConcurrentServiceRegistry();
     }
@@ -26,5 +34,9 @@ public class RegistryFactory
      */
     public static Registry getRegistry() {
         return registry;
+    }
+    
+    public static Loader getLoader() {
+        return loader;
     }
 }

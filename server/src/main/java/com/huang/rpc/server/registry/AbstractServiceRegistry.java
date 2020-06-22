@@ -19,12 +19,10 @@ import org.slf4j.LoggerFactory;
 import com.huang.rpc.api.request.RequestBody;
 import com.huang.rpc.server.annotation.Protocol;
 import com.huang.rpc.server.annotation.Version;
-import com.huang.rpc.server.config.GlobalConfig;
 import com.huang.rpc.server.constants.LoaderConstants;
 import com.huang.rpc.server.handler.Invocation;
 import com.huang.rpc.server.handler.RpcInvocation;
 import com.huang.rpc.server.init.Loader;
-import com.huang.rpc.server.init.support.RpcLoader;
 import com.huang.rpc.server.listener.Lifecycle;
 import com.huang.rpc.server.listener.LifecycleListener;
 import com.huang.rpc.server.listener.support.LifecycleEvent;
@@ -39,16 +37,9 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     // service全限定名称缓存
     private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
     
-    private static final Loader loader;
+    private static final Loader loader = RegistryFactory.getLoader();
     
     private final LifecycleSupport lifecycle = new LifecycleSupport();
-    
-    static {
-        // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
-        // TODO:后续考虑使用热更新技术来动态获取配置文件,需要使用后台线程定时读取文件的更新时间
-        loader = new RpcLoader();
-        loader.load(GlobalConfig.RPC_PROPERTIES);
-    }
     
     /*******************************Member Variables****************************/
     /**
