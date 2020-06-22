@@ -5,19 +5,15 @@ import com.huang.rpc.server.listener.LifecycleListener;
 
 /**
  * 采用facade模式，对外只暴露合适的方法
+ * 现对LifecycleSupport用法进行说明，必须实现下述两个动作
+ *  1、需要进行事件通知的对象都必须实现和LifecycleSupport相同的接口（Lifecycle）
+ *  2、所有事件通知的对象都存在LifecycleSupport对象的引用，然后通过LifecycleSupport完成事件的通知调用和其他生命周期函数。
  */
 public class LifecycleSupport implements Lifecycle {
-    
-    private Lifecycle lifecycle;
     
     private LifecycleListener[] listeners = new LifecycleListener[0];
     
     private final Object listenersLock = new Object(); // Lock object for changes to listeners
-
-    public LifecycleSupport(Lifecycle lifecycle) {
-        super();
-        this.lifecycle = lifecycle;
-    }
 
     @Override
     public void fireEvent(LifecycleEvent event) {

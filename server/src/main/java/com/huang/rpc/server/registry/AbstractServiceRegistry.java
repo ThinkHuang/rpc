@@ -41,7 +41,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     private static final Loader loader;
     
-    private LifecycleSupport lifecycle = new LifecycleSupport(this);
+    private final LifecycleSupport lifecycle = new LifecycleSupport();
     
     static {
         // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
@@ -85,19 +85,22 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     @Override
     public void fireEvent(LifecycleEvent event)
     {
-        // do nothing
+        // 使用委托机制调用LifecycleSupport的事件调用方法
+        lifecycle.fireEvent(event);
     }
 
     @Override
     public void addLifecycleListener(LifecycleListener listener)
     {
-        // do nothing
+        // 使用委托机制调用LifecycleSupport添加监听器
+        lifecycle.addLifecycleListener(listener);
     }
 
     @Override
     public void removeLifecycleListener(LifecycleListener listener)
     {
-        // do nothing  
+        // 使用委托机制调用LifecycleSupport删除监听器
+        lifecycle.removeLifecycleListener(listener);
     }
 
     @Override
@@ -128,13 +131,13 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
                 Protocol protocol = method.getAnnotation(Protocol.class);
                 if (version.value().equalsIgnoreCase(versionName) && protocol.value().equalsIgnoreCase(protocolName)) {
                     // 触发监听事件执行
-                    lifecycle.fireEvent(new LifecycleEvent(this));
+                    fireEvent(new LifecycleEvent(this));
                     return invocation;
                 }
             } 
         }
         // 触发监听事件执行
-        lifecycle.fireEvent(new LifecycleEvent(this));
+        fireEvent(new LifecycleEvent(this));
         return invocation;
     }
     
@@ -168,7 +171,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
             }
         }
         // 注册新的服务实例被发现事件
-        lifecycle.addLifecycleListener(new NewServiceDiscoveriedListener());
+        addLifecycleListener(new NewServiceDiscoveriedListener());
         return new ArrayList<>(serviceNames);
     }
     
