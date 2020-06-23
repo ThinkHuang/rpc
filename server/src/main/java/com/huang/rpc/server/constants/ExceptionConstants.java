@@ -9,4 +9,5 @@ public interface ExceptionConstants {
     int FORBIDDEN_EXCEPTION = 4;
     int SERIALIZATION_EXCEPTION = 5;
     int MULTIPLE_SERVICE_EXCEPTION = 6;
+    int NO_SERVICE_REGISTRY_FOUND_EXCEPTION = 7;
 }

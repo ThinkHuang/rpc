@@ -10,4 +10,18 @@ public interface GlobalConfig
     String BASE_PACKAGE = "com.huang.rpc.server.service";
     
     String RPC_PROPERTIES = "rpc.properties";
+    
+    /**
+     * 注册器
+     * @author huangyejun
+     *
+     */
+    interface Registry {
+        
+        String REDIS = "redis";
+        
+        String ZOOKEEPER = "zookeeper";
+        
+        String CONCURRENT = "concurrent";
+    }
 }
