@@ -151,7 +151,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
                 Class<?>[] interfaces = clazz.getInterfaces();
                 for (Class<?> interfaceClass : interfaces) {
                     // 找到了实现了接口的服务
-                    if (Objects.equals(className, interfaceClass.getName())) { // NOTE:Objects.equals方法是1.7才出的
+                    if (className.equals(interfaceClass.getName())) {
                         serviceNames.add(serviceClassName);
                     }
                 }
