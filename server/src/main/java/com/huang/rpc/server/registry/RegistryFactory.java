@@ -9,8 +9,8 @@ import com.huang.rpc.server.exception.RpcException;
 import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.init.support.RpcLoader;
 import com.huang.rpc.server.registry.support.ConcurrentServiceRegistry;
-import com.huang.rpc.server.registry.support.RedisServiceRegistry;
 import com.huang.rpc.server.registry.support.ZookeeperServiceRegistry;
+import com.huang.rpc.server.registry.support.redis.RedisServiceRegistry;
 
 /**
  * 通过工厂类实例化registry的具体实现

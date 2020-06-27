@@ -1,4 +1,4 @@
-package com.huang.rpc.server.registry.support;
+package com.huang.rpc.server.registry.support.redis;
 
 import java.net.URL;
 
@@ -14,7 +14,7 @@ public class RedisServiceRegistry extends AbstractServiceRegistry
 {
     // redis默认端口
     private static final int DEFAULT_REDIS_PORT = 6379;
-    
+    // redis默认主机
     private static final String DEFAULT_REDIS_HOST = "127.0.0.1";
     
     private static Jedis jedis;
@@ -23,7 +23,7 @@ public class RedisServiceRegistry extends AbstractServiceRegistry
         // 配置jedispool连接池相关信息
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         JedisPool jedisPool = new JedisPool(poolConfig, DEFAULT_REDIS_HOST, DEFAULT_REDIS_PORT);
-        try
+        try 
         {
             //从连接池获取jedis对象
             jedis = jedisPool.getResource();
@@ -37,11 +37,23 @@ public class RedisServiceRegistry extends AbstractServiceRegistry
         }
     }
     
+    
+    
+    public static Jedis getJedis()
+    {
+        return jedis;
+    }
+
     public static void main(String[] args)
     {
         new RedisServiceRegistry();
         jedis.set("java", "good");
         System.out.println(jedis.get("java"));
+        RequestBody body = new RequestBody();
+        body.setMethodName("test");
+        jedis.set("test".getBytes(), SerializeUtil.serialize(body));
+        byte[] result = jedis.get("test".getBytes());
+        System.out.println(SerializeUtil.unserialize(result));
     }
     
     @Override
