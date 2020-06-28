@@ -20,7 +20,7 @@ import com.huang.rpc.server.registry.support.redis.RedisServiceRegistry;
 public class RegistryFactory
 {
     
-    private static Registry registry;
+    private static final Registry registry;
     
     private static final Loader loader;
     
@@ -32,7 +32,6 @@ public class RegistryFactory
         loader = new RpcLoader();
         loader.load(GlobalConfig.RPC_PROPERTIES);
         Map<String, String> properties = loader.getPropertyMap();
-        // TODO:目前默认实例化ConcurrentServiceRegistry，后续改到rpc.properties去动态配置
         String rpcServiceRegistry = properties.get(LoaderConstants.RPC_SERVICE_REGISTRY);
         if (null == rpcServiceRegistry || GlobalConfig.Registry.CONCURRENT.equals(rpcServiceRegistry)) {
             registry = new ConcurrentServiceRegistry();
@@ -53,6 +52,10 @@ public class RegistryFactory
         return registry;
     }
     
+    /**
+     * 获取加载器
+     * @return
+     */
     public static Loader getLoader() {
         return loader;
     }

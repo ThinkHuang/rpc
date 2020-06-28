@@ -1,10 +1,16 @@
 package com.huang.rpc.server.handler;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class RpcInvocation implements Invocation {
+public class RpcInvocation implements Invocation, Serializable {
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -5340731428920747697L;
+
     private Object clazz;
     
     private Method method;

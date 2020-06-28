@@ -69,8 +69,8 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
             List<String> serviceUniqueNames = serviceNameCache.get(getCacheKey());
             if (null == serviceUniqueNames) {
                 serviceUniqueNames = getServiceName(className);
+                serviceNameCache.put(getCacheKey(), serviceUniqueNames);
             }
-            serviceNameCache.put(getCacheKey(), serviceUniqueNames);
             if (log.isInfoEnabled()) {
                 log.info("服务实现接口为：{}", serviceUniqueNames);
             }
