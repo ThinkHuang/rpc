@@ -2,6 +2,9 @@ package com.huang.rpc.server.registry;
 
 import java.net.URL;
 
+import com.huang.rpc.api.request.RequestBody;
+import com.huang.rpc.server.handler.Invocation;
+
 /**
  * 定义注册接口，所有的注册服务都需要实现改接口
  * @author huangyejun
@@ -20,4 +23,12 @@ public interface Registry
      * @param url
      */
     void registr(URL url);
+    
+    /**
+     * 获取调用器实例，根据请求body获取Invocation
+     * @param body
+     * @return
+     */
+    Invocation getInvocation(RequestBody body) throws ReflectiveOperationException;
+    
 }

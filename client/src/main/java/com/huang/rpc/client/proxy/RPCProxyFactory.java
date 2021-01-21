@@ -23,6 +23,11 @@ import io.netty.handler.codec.serialization.ObjectEncoder;
 
 public class RPCProxyFactory implements ProxyFactory {
     
+    public <T> T createProxy(final Class<?> target)
+    {
+        return createProxy(target, null, null);
+    }
+    
     @SuppressWarnings("unchecked")
     public <T> T createProxy(final Class<?> target, final String version, final String protocol) {
         return (T)Proxy.newProxyInstance(target.getClassLoader(), 
@@ -74,4 +79,5 @@ public class RPCProxyFactory implements ProxyFactory {
             }
         });
     }
+
 }
