@@ -33,7 +33,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     private static final Logger log = LoggerFactory.getLogger(AbstractServiceRegistry.class);
 
-    /********************************Static Area********************************/
+    /*************************************Static Area****************************************/
     // service全限定名称缓存
     private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
     
@@ -41,7 +41,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     private final LifecycleSupport lifecycle = new LifecycleSupport();
     
-    /*******************************Member Variables****************************/
+    /**************************************Member Variables**********************************/
     /**
      * 该成员变量不能为空
      */
@@ -135,7 +135,6 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     /**
      * 根据接口全限定名获取实现的服务的全限定名
      * @param className class名称
-     * @param singleton 是否单例
      * @return
      */
     protected synchronized List<String> getServiceName(final String className) {

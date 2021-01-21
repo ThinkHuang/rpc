@@ -7,7 +7,7 @@ import java.util.Map;
  * @author huangyejun
  *
  */
-public interface Loader
+public interface Loader extends Resource
 {
     /**
      * 加载指定目录的配置文件，并存入缓存中
@@ -15,9 +15,4 @@ public interface Loader
      */
     void load(String properties);
 
-    /**
-     * 获取映射文件内容
-     * @return
-     */
-    Map<String, String> getPropertyMap();
 }
