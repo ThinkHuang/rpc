@@ -23,8 +23,7 @@ public class LifecycleSupport implements Lifecycle {
     }
 
     @Override
-    public void addLifecycleListener(LifecycleListener listener)
-    {
+    public void addLifecycleListener(LifecycleListener listener) {
         synchronized (listenersLock) {
             LifecycleListener results[] = new LifecycleListener[listeners.length + 1];
             for (int i = 0; i < listeners.length; i++)
@@ -35,8 +34,7 @@ public class LifecycleSupport implements Lifecycle {
     }
 
     @Override
-    public void removeLifecycleListener(LifecycleListener listener)
-    {
+    public void removeLifecycleListener(LifecycleListener listener) {
         synchronized (listenersLock) {
             int n = -1;
             for (int i = 0; i < listeners.length; i++) {

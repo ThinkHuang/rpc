@@ -39,7 +39,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     private static final Loader loader = RegistryFactory.getLoader();
     
-    private final LifecycleSupport lifecycle = new LifecycleSupport();
+    private static final LifecycleSupport lifecycle = new LifecycleSupport();
     
     /**************************************Member Variables**********************************/
     /**
