@@ -46,6 +46,7 @@ private static final Logger log = LoggerFactory.getLogger(RpcLoader.class);
         }
     }
 
+    @Override
     public Map<String, String> getPropertyMap()
     {
         return propertyMap;

@@ -8,8 +8,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.validation.constraints.NotNull;
 
@@ -17,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.huang.rpc.api.request.RequestBody;
+import com.huang.rpc.api.service.UserService;
 import com.huang.rpc.server.annotation.Protocol;
 import com.huang.rpc.server.annotation.Version;
 import com.huang.rpc.server.constants.LoaderConstants;
@@ -32,6 +36,8 @@ import com.huang.rpc.server.listener.support.NewServiceDiscoveriedListener;
 public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     private static final Logger log = LoggerFactory.getLogger(AbstractServiceRegistry.class);
+    
+    private static final String CLASS_SUFFIX = ".class";
 
     /*************************************Static Area****************************************/
     // service全限定名称缓存
@@ -40,6 +46,8 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     private static final Loader loader = RegistryFactory.getLoader();
     
     private static final LifecycleSupport lifecycle = new LifecycleSupport();
+    
+    private static final List<Invocation> fullServices = new ArrayList<>();
     
     /**************************************Member Variables**********************************/
     /**
@@ -56,8 +64,12 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     public void publish(String basePackage) {
         // 获取服务列表
         findServices(basePackage);
+        // 使用Java的SPI机制进行服务注册
+        findSPIServices(UserService.class);
         // 开始做服务发布
         doPublish(basePackage);
+        // 获取所有已注册的服务实例列表
+        findAllServices();
     }
     
     @Override
@@ -126,6 +138,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
                     return invocation;
                 }
             } 
+            fullServices.add(invocation);
         }
         // 触发监听事件执行
         fireEvent(new LifecycleEvent(this));
@@ -201,10 +214,46 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
                 String filename = file.getName();
                 if (filename.endsWith(".class")) {
                     String fQFileName = basePackage + "." + file.getName();
+                    log.info("获取正常的实现类的全限定名，{}", fQFileName.replace(CLASS_SUFFIX, ""));
                     serviceCache.add(fQFileName.replace(".class", ""));
                 }
             }
         }
+    }
+    
+    /**
+     * 基于java SPI机制的服务发现
+     * 有一点问题：
+     * 1、现在服务接口属于硬编码。
+     */
+    private void findSPIServices(Class<UserService> clazz)
+    {
+        ServiceLoader<UserService> serviceLoader = ServiceLoader.load(clazz);
+        final List<UserService> services = StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
+        if (null != services) {
+            for (UserService userService : services) {
+                // 获取到使用SPI注册的服务的全限定名
+                if (log.isInfoEnabled()) {
+                    log.info("使用SPI注册服务发现的服务全限定名称为：{}", userService.getClass().getCanonicalName());
+                }
+                serviceCache.add(userService.getClass().getCanonicalName());
+            }
+        }
+    }
+
+    /**
+     * 获取所有的服务实例列表
+     * @return
+     */
+    private List<Invocation> findAllServices() {
+        if (null != fullServices && fullServices.size() > 0) {
+           for (Invocation invocation : fullServices) {
+               if (log.isInfoEnabled()) {
+                   log.info("服务实例为：{}", invocation);
+               }
+           }
+        }
+        return fullServices;
     }
     
     /**
