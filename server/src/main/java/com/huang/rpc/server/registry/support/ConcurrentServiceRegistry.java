@@ -62,6 +62,9 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     public Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException {
         String className = body.getClassName();
         // 找到服务名
+        if (log.isInfoEnabled()) {
+            log.info("调用的缓存key为：{}", getCacheKey());
+        }
         if (singleton && serviceMapper.containsKey(getCacheKey())) {
             return serviceMapper.get(getCacheKey());
         } else {

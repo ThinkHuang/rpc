@@ -56,9 +56,6 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     @NotNull
     private CacheKey cacheKey;
     
-    private int key;
-    
-    
     /***********************************Public Method****************************************/
     @Override
     public void publish(String basePackage) {
@@ -76,7 +73,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     public Invocation getInvocation(RequestBody body) throws ReflectiveOperationException
     {
         if (log.isInfoEnabled()) {
-            log.info("{} ? singleton : prototype", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
+            log.info("请求体为：{}", body);
         }
         boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         cacheKey = new CacheKey(body.getClassName(), body.getVersion(), body.getProtocol());
@@ -183,11 +180,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
      * @return
      */
     protected synchronized int getCacheKey() {
-        if (0 != key) {
-            return key;
-        } 
-        key = cacheKey.hashCode();
-        return key;
+        return cacheKey.getKey();
     }
     
     /***********************************Protected Method****************************************/
@@ -223,15 +216,14 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     
     /**
      * 基于java SPI机制的服务发现
-     * 有一点问题：
-     * 1、现在服务接口属于硬编码。
+     * @param <T>
      */
-    private void findSPIServices(Class<UserService> clazz)
+    private <T> void findSPIServices(Class<T> clazz)
     {
-        ServiceLoader<UserService> serviceLoader = ServiceLoader.load(clazz);
-        final List<UserService> services = StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
+        ServiceLoader<T> serviceLoader = ServiceLoader.load(clazz);
+        final List<T> services = StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
         if (null != services) {
-            for (UserService userService : services) {
+            for (T userService : services) {
                 // 获取到使用SPI注册的服务的全限定名
                 if (log.isInfoEnabled()) {
                     log.info("使用SPI注册服务发现的服务全限定名称为：{}", userService.getClass().getCanonicalName());
@@ -246,7 +238,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
      * @return
      */
     private List<Invocation> findAllServices() {
-        if (null != fullServices && fullServices.size() > 0) {
+        if (!fullServices.isEmpty()) {
            for (Invocation invocation : fullServices) {
                if (log.isInfoEnabled()) {
                    log.info("服务实例为：{}", invocation);
@@ -260,7 +252,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
      * 缓存键生成
      *
      */
-    protected static final class CacheKey {
+    protected final class CacheKey {
         
         /**
          * 接口类名称
@@ -277,6 +269,11 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
          */
         private String protocol;
         
+        /**
+         * 缓存 
+         */
+        private int key;
+        
         public CacheKey(String className) {
             this(className, null);
         }
@@ -289,18 +286,31 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
         public CacheKey(String className, String version, String protocol) {
             this(className, version);
             this.protocol = protocol;
+            initHashCode();
         }
         
+
         @Override
-        public final int hashCode() {
+        public int hashCode() {
+            // 缓存算法存在问题，导致v1.0和v2.0的生成相同
             int hashcode = className.hashCode();
             if (null != protocol) {
-                hashcode ^= protocol.hashCode();
+                hashcode ^= protocol.hashCode() & 0xFFEF;
             } 
             if (null != version) {
-                hashcode ^= version.hashCode();
+                hashcode ^= version.hashCode() & 0x0001;
             }
             return hashcode;
         }
+        
+        private void initHashCode() {
+            key = hashCode();
+        }
+
+        public int getKey()
+        {
+            return key;
+        }
+        
     }
 }

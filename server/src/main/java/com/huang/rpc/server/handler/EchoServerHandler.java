@@ -1,5 +1,8 @@
 package com.huang.rpc.server.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.huang.rpc.api.request.RequestBody;
 import com.huang.rpc.server.registry.Registry;
 import com.huang.rpc.server.registry.RegistryFactory;
@@ -13,6 +16,7 @@ import io.netty.channel.ChannelHandlerContext;
 @Sharable
 public class EchoServerHandler extends ChannelHandlerAdapter {
     
+    private static final Logger log = LoggerFactory.getLogger(EchoServerHandler.class);
     /**
      * When the channel received the message from Inbound, this method was invoked
      */
@@ -22,6 +26,9 @@ public class EchoServerHandler extends ChannelHandlerAdapter {
         RequestBody body = (RequestBody)msg;
         Registry registry = RegistryFactory.getRegistry();
         Invocation invocation = registry.getInvocation(body);
+        if (log.isInfoEnabled()) {
+            log.info("当前获取到的调用实例为：{}", invocation);
+        }
         if (null != invocation) {
             Object result = invocation.invoke();
             ctx.writeAndFlush(result);
