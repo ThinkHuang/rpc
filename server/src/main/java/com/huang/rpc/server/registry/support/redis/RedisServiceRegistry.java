@@ -39,4 +39,12 @@ public class RedisServiceRegistry extends AbstractServiceRegistry
     protected Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException {
         return null;
     }
+
+    @Override
+    public String toString()
+    {
+        return "RedisServiceRegistry";
+    }
+    
+    
 }

@@ -116,7 +116,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
      * @param body
      */
     protected Invocation getCertainInvocation(final List<String> serviceUniqueNames, final RequestBody body) throws ReflectiveOperationException {
-        // TODO：这时会实例化所有的实现，可否考虑做懒加载的实现
+        // 这时会实例化所有的实现，可否考虑做懒加载的实现,容器的启动便是加载所有服务实例，无需做懒加载考虑
         // 这里暂时做的是用到即初始化
         final String versionName = body.getVersion();
         final String protocolName = body.getProtocol();
@@ -130,7 +130,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
                 Version version = method.getAnnotation(Version.class);
                 Protocol protocol = method.getAnnotation(Protocol.class);
                 if (version.value().equalsIgnoreCase(versionName) && protocol.value().equalsIgnoreCase(protocolName)) {
-                    // 触发监听事件执行
+                    // 触发监听事件执行，此时的事件监听者为服务实例容器，告知服务实例容器即可
                     fireEvent(new LifecycleEvent(this));
                     return invocation;
                 }
@@ -205,10 +205,10 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
             } else {
                 // 如果是文件，那么需要将文件的全限定名称缓存到serviceCache中
                 String filename = file.getName();
-                if (filename.endsWith(".class")) {
+                log.info("获取正常的实现类的全限定名，{}", filename);
+                if (filename.endsWith(CLASS_SUFFIX)) {
                     String fQFileName = basePackage + "." + file.getName();
-                    log.info("获取正常的实现类的全限定名，{}", fQFileName.replace(CLASS_SUFFIX, ""));
-                    serviceCache.add(fQFileName.replace(".class", ""));
+                    serviceCache.add(fQFileName.replace(CLASS_SUFFIX, ""));
                 }
             }
         }
@@ -223,12 +223,12 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
         ServiceLoader<T> serviceLoader = ServiceLoader.load(clazz);
         final List<T> services = StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
         if (null != services) {
-            for (T userService : services) {
+            for (T service : services) {
                 // 获取到使用SPI注册的服务的全限定名
                 if (log.isInfoEnabled()) {
-                    log.info("使用SPI注册服务发现的服务全限定名称为：{}", userService.getClass().getCanonicalName());
+                    log.info("使用SPI注册服务发现的服务全限定名称为：{}", service.getClass().getCanonicalName());
                 }
-                serviceCache.add(userService.getClass().getCanonicalName());
+                serviceCache.add(service.getClass().getCanonicalName());
             }
         }
     }

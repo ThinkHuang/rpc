@@ -84,4 +84,13 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
             return invocation;
         }
     }
+
+    @Override
+    public String toString()
+    {
+        return "ConcurrentServiceRegistry";
+    }
+    
+    
+    
 }
