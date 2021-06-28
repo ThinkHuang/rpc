@@ -104,7 +104,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     }
 
     @Override
-    public void registr(URL url)
+    public void register(URL url)
     {
         
     }

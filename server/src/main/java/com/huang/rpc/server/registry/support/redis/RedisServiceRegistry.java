@@ -21,7 +21,7 @@ public class RedisServiceRegistry extends AbstractServiceRegistry
     }
     
     @Override
-    public void registr(URL url)
+    public void register(URL url)
     {
         
     }

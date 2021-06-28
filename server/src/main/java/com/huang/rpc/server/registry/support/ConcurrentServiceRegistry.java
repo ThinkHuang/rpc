@@ -39,7 +39,7 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     }
     
     @Override
-    public void registr(URL url) {
+    public void register(URL url) {
     }
     
     /**
