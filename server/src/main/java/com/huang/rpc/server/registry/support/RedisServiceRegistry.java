@@ -1,4 +1,4 @@
-package com.huang.rpc.server.registry.support.redis;
+package com.huang.rpc.server.registry.support;
 
 import java.net.URL;
 import java.util.List;
@@ -37,6 +37,9 @@ public class RedisServiceRegistry extends AbstractServiceRegistry {
         }
         Invocation cachedInvocation = RedisUtils.getObject(getCacheKey(), Invocation.class);
         if (ObjectUtil.isNotEmpty(cachedInvocation)) {
+            if (logger.isInfoEnabled()) {
+                logger.info("获取到redis缓存对象：{}", cachedInvocation);
+            }
             return cachedInvocation;
         } else {
             List<String> serviceUniqueNames = getServiceName(className);

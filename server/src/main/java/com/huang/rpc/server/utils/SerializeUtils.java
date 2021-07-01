@@ -60,17 +60,18 @@ public class SerializeUtils {
      * @return
      */
     public static <T> String serializableFastjson(T object) {
+        System.out.println("序列化对象为：" + object);
         return JSON.toJSONString(object);
     }
 
     /**
      * 将JSON字符串反序列化为java对象
      * @param <T>
-     * @param clazz
      * @param value
+     * @param clazz
      * @return
      */
-    public static <T> T deserializableFastjson(Class<T> clazz, String value) {
+    public static <T> T deserializableFastjson(String value, Class<T> clazz) {
         return JSON.parseObject(value, clazz);
     }
 }

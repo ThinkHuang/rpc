@@ -4,9 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.huang.rpc.api.request.RequestBody;
+import com.huang.rpc.server.constants.Result;
 import com.huang.rpc.server.registry.Registry;
 import com.huang.rpc.server.registry.RegistryFactory;
 
+import cn.hutool.core.util.ObjectUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -29,9 +31,10 @@ public class EchoServerHandler extends ChannelHandlerAdapter {
         if (log.isInfoEnabled()) {
             log.info("当前获取到的调用实例为：{}", invocation);
         }
-        if (null != invocation) {
-            Object result = invocation.invoke();
-            ctx.writeAndFlush(result);
+        if (ObjectUtil.isNotEmpty(invocation)) {
+            Invoker invoker = new RpcInvoker();
+            Result result = invoker.invoke(invocation);
+            ctx.writeAndFlush(result.getData());
         } else {
             log.info("未找到可用实例，请确认传参是否正确!");
         }
