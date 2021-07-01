@@ -22,7 +22,7 @@ public class ZookeeperServiceRegistry extends AbstractServiceRegistry
     }
 
     @Override
-    protected Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException {
+    protected Invocation doGetInvocation(RequestBody body) throws ReflectiveOperationException {
         return null;
     }
 

@@ -21,15 +21,17 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     
     private static final Logger logger = LoggerFactory.getLogger(ConcurrentServiceRegistry.class);
     
+    protected static final String CACHE_PREFIX = "CONC:";
+    
     /**
      * TODO：基于服务实例可以只缓存实现者，但是，如果是做多版本控制和协议控制，那么就需要抽象到方法层面了。
      * 现在要将服务实现者和方法实例分开实现
      */
     // 接口名和服务名的映射关系缓存(这里服务开始支持多服务)
-    private static final Map<Integer, List<String>> serviceNameCache = new ConcurrentHashMap<>();
+    private static final Map<String, List<String>> serviceNameCache = new ConcurrentHashMap<>();
     
     // 实例池，所有的服务实例都会缓存在该对象中
-    private static final Map<Integer, Invocation> serviceMapper = new ConcurrentHashMap<>();
+    private static final Map<String, Invocation> serviceMapper = new ConcurrentHashMap<>();
     
     @Override
     public void doPublish(String basePackage) {
@@ -53,19 +55,18 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
     
     /**
      * 获取调用点
-     * @param singleton
      * @param body
      * @return
      * @throws ReflectiveOperationException
      */
     @Override
-    public Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException {
+    public Invocation doGetInvocation(RequestBody body) throws ReflectiveOperationException {
         String className = body.getClassName();
         // 找到服务名
         if (logger.isInfoEnabled()) {
             logger.info("调用的缓存key为：{}", getCacheKey());
         }
-        if (singleton && serviceMapper.containsKey(getCacheKey())) {
+        if (serviceMapper.containsKey(getCacheKey())) {
             return serviceMapper.get(getCacheKey());
         } else {
             // 如果全限定名服务不存在，那么直接返回空--------------------*
@@ -84,13 +85,16 @@ public class ConcurrentServiceRegistry extends AbstractServiceRegistry {
             return invocation;
         }
     }
+    
+    @Override
+    protected synchronized String getCacheKey() {
+        return CACHE_PREFIX + super.getCacheKey();
+    }
 
     @Override
     public String toString()
     {
         return "ConcurrentServiceRegistry";
     }
-    
-    
     
 }

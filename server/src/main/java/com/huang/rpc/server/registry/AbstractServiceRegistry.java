@@ -7,7 +7,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,10 +22,8 @@ import com.huang.rpc.api.request.RequestBody;
 import com.huang.rpc.api.service.UserService;
 import com.huang.rpc.server.annotation.Protocol;
 import com.huang.rpc.server.annotation.Version;
-import com.huang.rpc.server.constants.LoaderConstants;
 import com.huang.rpc.server.handler.Invocation;
 import com.huang.rpc.server.handler.RpcInvocation;
-import com.huang.rpc.server.init.Loader;
 import com.huang.rpc.server.listener.Lifecycle;
 import com.huang.rpc.server.listener.LifecycleListener;
 import com.huang.rpc.server.listener.support.LifecycleEvent;
@@ -38,12 +35,10 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
     private static final Logger log = LoggerFactory.getLogger(AbstractServiceRegistry.class);
     
     private static final String CLASS_SUFFIX = ".class";
-
+    
     /*************************************Static Area****************************************/
     // service全限定名称缓存
     private static final List<String> serviceCache = new CopyOnWriteArrayList<>();
-    
-    private static final Loader loader = RegistryFactory.getLoader();
     
     private static final LifecycleSupport lifecycle = new LifecycleSupport();
     
@@ -75,9 +70,8 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
         if (log.isInfoEnabled()) {
             log.info("请求体为：{}", body);
         }
-        boolean singleton = Objects.equals("true", loader.getPropertyMap().get(LoaderConstants.RPC_SERVICE_SINGLETON));
         cacheKey = new CacheKey(body.getClassName(), body.getVersion(), body.getProtocol());
-        return doGetInvocation(singleton, body);
+        return doGetInvocation(body);
     }
     
     
@@ -124,14 +118,13 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
         for (String serviceName : serviceUniqueNames) {
             Object clazz = Class.forName(serviceName).newInstance();
             Method method = clazz.getClass().getMethod(body.getMethodName(), body.getParamTypes());
-            // 提前实例化invocation，当存在符合条件的service时，直接返回，否则返回最新版本
-            invocation = new RpcInvocation(clazz, method, body.getParamValues());
             if (method.isAnnotationPresent(Version.class) && method.isAnnotationPresent(Protocol.class)) {
                 Version version = method.getAnnotation(Version.class);
                 Protocol protocol = method.getAnnotation(Protocol.class);
                 if (version.value().equalsIgnoreCase(versionName) && protocol.value().equalsIgnoreCase(protocolName)) {
                     // 触发监听事件执行，此时的事件监听者为服务实例容器，告知服务实例容器即可
                     fireEvent(new LifecycleEvent(this));
+                    invocation = new RpcInvocation(clazz, method, body.getParamValues());
                     return invocation;
                 }
             } 
@@ -179,14 +172,14 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
      * 获取缓存key
      * @return
      */
-    protected synchronized int getCacheKey() {
+    protected synchronized String getCacheKey() {
         return cacheKey.getKey();
     }
     
     /***********************************Protected Method****************************************/
     protected abstract void doPublish(String basePackage);
     
-    protected abstract Invocation doGetInvocation(boolean singleton, RequestBody body) throws ReflectiveOperationException;
+    protected abstract Invocation doGetInvocation(RequestBody body) throws ReflectiveOperationException;
     
     /***********************************Private Method****************************************/
     private void findServices(String basePackage) {
@@ -272,7 +265,7 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
         /**
          * 缓存 
          */
-        private int key;
+        private String key;
         
         public CacheKey(String className) {
             this(className, null);
@@ -304,10 +297,10 @@ public abstract class AbstractServiceRegistry implements Registry, Lifecycle {
         }
         
         private void initHashCode() {
-            key = hashCode();
+            key = String.valueOf(hashCode());
         }
 
-        public int getKey()
+        public String getKey()
         {
             return key;
         }

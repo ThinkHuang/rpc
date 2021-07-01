@@ -12,6 +12,8 @@ import com.huang.rpc.server.registry.support.ConcurrentServiceRegistry;
 import com.huang.rpc.server.registry.support.ZookeeperServiceRegistry;
 import com.huang.rpc.server.registry.support.redis.RedisServiceRegistry;
 
+import cn.hutool.core.util.ObjectUtil;
+
 /**
  * 通过工厂类实例化registry的具体实现
  * @author huangyejun
@@ -27,13 +29,13 @@ public class RegistryFactory
     private RegistryFactory() {}
     
     static {
-        // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储，
+        // 加载默认的配置文件rpc.properties，读取其中的配置文件，以key-value的形式存储
         // TODO:后续考虑使用热更新技术来动态获取配置文件,需要使用后台线程定时读取文件的更新时间
         LOADER = new RpcLoader();
         LOADER.load(GlobalConfig.RPC_PROPERTIES);
         Map<String, String> properties = LOADER.getPropertyMap();
         String rpcServiceRegistry = properties.get(LoaderConstants.RPC_SERVICE_REGISTRY);
-        if (null == rpcServiceRegistry || GlobalConfig.Registry.CONCURRENT.equals(rpcServiceRegistry)) {
+        if (ObjectUtil.isEmpty(rpcServiceRegistry) || GlobalConfig.Registry.CONCURRENT.equals(rpcServiceRegistry)) {
             REGISTRY = new ConcurrentServiceRegistry();
         } else if(GlobalConfig.Registry.REDIS.equals(rpcServiceRegistry)) {
             REGISTRY = new RedisServiceRegistry();
