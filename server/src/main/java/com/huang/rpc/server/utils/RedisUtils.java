@@ -1,6 +1,5 @@
 package com.huang.rpc.server.utils;
 
-import java.nio.charset.Charset;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -9,11 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import com.huang.rpc.api.request.RequestBody;
 import com.huang.rpc.server.config.RedisConfig;
-import com.huang.rpc.server.handler.Invocation;
-import com.huang.rpc.server.handler.RpcInvocation;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.SerializeUtil;
 import redis.clients.jedis.Jedis;
 
 /**
@@ -53,10 +49,10 @@ public class RedisUtils {
      * @param key
      * @return
      */
-    public static <T> T getObject(final String key) {
+    public static <T> T getObject(final String key, Class<T> clazz) {
         String result = getString(key);
         if (ObjectUtil.isNotEmpty(result)) {
-            return SerializeUtil.deserialize(result.getBytes(Charset.defaultCharset()));
+            return SerializeUtils.deserializableFastjson(clazz, result);
         }
         return null;
     }
@@ -90,7 +86,7 @@ public class RedisUtils {
             if (StringUtils.isEmpty(key)) {
                 return;
             }
-            jedis.set(key, new String(SerializeUtil.serialize(values)));
+            jedis.set(key, SerializeUtils.serializableFastjson(values));
         } catch (Exception e) {
             logger.error("set Object fail", e);
         }
@@ -188,9 +184,9 @@ public class RedisUtils {
     public static void main(String[] args) {
         RequestBody body = new RequestBody();
         body.setClassName("ceshi");
-        setString("ceshi", body.toString());
-        String cacheBody = getString("ceshi");
-        logger.info(cacheBody);
+        setObject("ceshi", body);
+        RequestBody cacheBody = getObject("ceshi", RequestBody.class);
+        logger.info(cacheBody.getClassName());
     }
 
 }

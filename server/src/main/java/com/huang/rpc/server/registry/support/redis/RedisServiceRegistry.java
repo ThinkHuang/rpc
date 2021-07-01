@@ -35,7 +35,7 @@ public class RedisServiceRegistry extends AbstractServiceRegistry {
         if (logger.isInfoEnabled()) {
             logger.info("调用的缓存key为：{}", getCacheKey());
         }
-        Invocation cachedInvocation = RedisUtils.getObject(getCacheKey());
+        Invocation cachedInvocation = RedisUtils.getObject(getCacheKey(), Invocation.class);
         if (ObjectUtil.isNotEmpty(cachedInvocation)) {
             return cachedInvocation;
         } else {

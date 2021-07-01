@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import com.alibaba.fastjson.JSON;
+
 /**
  * @author huangyejun
  *
@@ -14,7 +16,12 @@ public class SerializeUtils {
     
     private SerializeUtils() {}
 
-    public static byte[] serialize(Object obj) {
+    /**
+     * jdk序列化
+     * @param obj
+     * @return
+     */
+    public static byte[] serializeJDK(Object obj) {
         byte[] bytes = null;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -29,7 +36,12 @@ public class SerializeUtils {
         return bytes;
     }
 
-    public static Object deSerialize(byte[] bytes) {
+    /**
+     * jdk反序列
+     * @param bytes
+     * @return
+     */
+    public static Object deserializeJDK(byte[] bytes) {
         Object obj = null;
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -39,5 +51,26 @@ public class SerializeUtils {
             e.printStackTrace();
         }
         return obj;
+    }
+    
+    /**
+     * fastjson将对象序列化为JSON字符串
+     * @param <T>
+     * @param object
+     * @return
+     */
+    public static <T> String serializableFastjson(T object) {
+        return JSON.toJSONString(object);
+    }
+
+    /**
+     * 将JSON字符串反序列化为java对象
+     * @param <T>
+     * @param clazz
+     * @param value
+     * @return
+     */
+    public static <T> T deserializableFastjson(Class<T> clazz, String value) {
+        return JSON.parseObject(value, clazz);
     }
 }
