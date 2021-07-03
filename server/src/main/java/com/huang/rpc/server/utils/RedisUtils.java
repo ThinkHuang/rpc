@@ -52,7 +52,10 @@ public class RedisUtils {
     public static <T> T getObject(final String key, Class<T> clazz) {
         String result = getString(key);
         if (ObjectUtil.isNotEmpty(result)) {
-            //TODO:无法将JSON字符串反序列化为Invocation
+            /*
+             * XXX:无法将JSON字符串反序列化为Invocation?
+             * 无法将Invocation反序列化的原因在于Invocation是接口，而不是可以实例化的
+             */
             return SerializeUtils.deserializableFastjson(result, clazz);
         }
         return null;
