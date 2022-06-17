@@ -20,7 +20,7 @@
     <redis.client.version>2.9.0</redis.client.version>
     <zookeeper.version>3.6.1</zookeeper.version>
     <hutool.version>5.7.2</hutool.version>
-    <fastjson.version>1.2.47</fastjson.version>
+    <fastjson.version>1.2.83</fastjson.version>
   </properties>
 
   <dependencies>
